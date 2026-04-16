@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 資源庫 - 協助有特殊教育需要的學生</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+
+  /* ─── Header ─── */
+  header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
+    color: white;
+    padding: 28px 24px 24px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.7rem; font-weight: 700; margin-bottom: 4px; }
+  header p  { font-size: 0.95rem; opacity: 0.85; }
+
+  /* ─── Controls ─── */
+  .controls {
+    background: white;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  #searchInput {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 16px;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #searchInput:focus { border-color: #2d6a9f; }
+
+  .results-count {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #718096;
+    white-space: nowrap;
+  }
+  #count { font-weight: 700; color: #2d6a9f; margin: 0 4px; }
+
+  /* Filter sections */
+  .filter-section { margin-bottom: 10px; }
+  .filter-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.18s;
+    background: #edf2f7;
+    color: #4a5568;
+  }
+  .filter-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+  .filter-btn.active {
+    color: white;
+    border-color: transparent;
+  }
+
+  /* SEN colours */
+  .sen-btn.active  { background: #744210; }
+  .sen-ASD.active  { background: #2c7a7b; }
+  .sen-SLI.active  { background: #553c9a; }
+  .sen-SpLD.active { background: #b7791f; }
+  .sen-ADHD.active { background: #c05621; }
+  .sen-MI.active   { background: #276749; }
+
+  /* Grade colours */
+  .grade-btn.active { background: #2b6cb0; }
+
+  /* Tier colours */
+  .tier-btn.active  { background: #c53030; }
+
+  .clear-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 2px solid #e2e8f0;
+    font-size: 0.82rem;
+    cursor: pointer;
+    background: white;
+    color: #718096;
+    font-weight: 600;
+    transition: all 0.18s;
+  }
+  .clear-btn:hover { background: #fed7d7; border-color: #fc8181; color: #c53030; }
+
+  /* ─── Grid ─── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ─── Card ─── */
+  .card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+  }
+  .card.hidden { display: none; }
+
+  /* Card header strip */
+  .card-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+  }
+  .card-number {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #2d6a9f;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a202c;
+    padding-right: 36px;
+    line-height: 1.3;
+  }
+
+  /* Tag pills */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .tag-sen  { background: #ebf4ff; color: #2b6cb0; }
+  .tag-grade{ background: #f0fff4; color: #276749; }
+  .tag-tier { background: #fff5f5; color: #c53030; }
+  .tag-lang { background: #faf5ff; color: #553c9a; }
+  .tag-cost { background: #fffaf0; color: #b7791f; }
+
+  /* Card body */
+  .card-body { padding: 14px 16px; flex: 1; }
+  .desc {
+    font-size: 0.87rem;
+    color: #4a5568;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .desc.expanded { -webkit-line-clamp: unset; }
+  .expand-btn {
+    background: none;
+    border: none;
+    color: #2d6a9f;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 0;
+    font-weight: 600;
+  }
+  .expand-btn:hover { text-decoration: underline; }
+
+  /* Card footer */
+  .card-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #2d6a9f;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .footer-link:hover { color: #1a4f7a; text-decoration: underline; }
+  .footer-link svg { flex-shrink: 0; }
+
+  /* No results */
+  .no-results {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #718096;
+    font-size: 1rem;
+  }
+  .no-results svg { margin-bottom: 12px; opacity: 0.4; }
+
+  @media (max-width: 500px) {
+    .grid { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
+    header h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 AI 資源庫 — 協助有特殊教育需要的學生</h1>
+  <p>AI-powered Resources for Students with Special Educational Needs (SEN)</p>
+</header>
+
+<div class="controls">
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="🔍 搜尋工具名稱或描述…" oninput="applyFilters()">
+    <div class="results-count">顯示 <span id="count">26</span> / 26 個工具</div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">SEN 類別</div>
+    <div class="filter-row" id="senFilters">
+      <button class="filter-btn sen-btn active" data-filter="sen" data-value="all" onclick="setFilter('sen','all',this)">全部</button>
+      <button class="filter-btn sen-ASD" data-filter="sen" data-value="ASD" onclick="setFilter('sen','ASD',this)">ASD 自閉症</button>
+      <button class="filter-btn sen-SLI" data-filter="sen" data-value="SLI" onclick="setFilter('sen','SLI',this)">SLI 言語障礙</button>
+      <button class="filter-btn sen-SpLD" data-filter="sen" data-value="SpLD" onclick="setFilter('sen','SpLD',this)">SpLD 特殊學習困難</button>
+      <button class="filter-btn sen-ADHD" data-filter="sen" data-value="ADHD" onclick="setFilter('sen','ADHD',this)">ADHD 注意力不足/過度活躍症</button>
+      <button class="filter-btn sen-MI" data-filter="sen" data-value="MI" onclick="setFilter('sen','MI',this)">MI 精神病</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">年級 / Grade Level</div>
+    <div class="filter-row">
+      <button class="filter-btn grade-btn active" data-filter="grade" data-value="all" onclick="setFilter('grade','all',this)">全部</button>
+      <button class="filter-btn grade-btn" data-filter="grade" data-value="幼兒" onclick="setFilter('grade','幼兒',this)">幼兒</button>
+      <button class="filter-btn grade-btn" data-filter="grade" data-value="小學" onclick="setFilter('grade','小學',this)">小學</button>
+      <button class="filter-btn grade-btn" data-filter="grade" data-value="中學" onclick="setFilter('grade','中學',this)">中學</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">介入層次 / Tier</div>
+    <div class="filter-row">
+      <button class="filter-btn tier-btn active" data-filter="tier" data-value="all" onclick="setFilter('tier','all',this)">全部</button>
+      <button class="filter-btn tier-btn" data-filter="tier" data-value="Tier1" onclick="setFilter('tier','Tier1',this)">Tier 1 全班</button>
+      <button class="filter-btn tier-btn" data-filter="tier" data-value="Tier2" onclick="setFilter('tier','Tier2',this)">Tier 2 小組</button>
+      <button class="filter-btn tier-btn" data-filter="tier" data-value="Tier3" onclick="setFilter('tier','Tier3',this)">Tier 3 個別</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid" id="cardGrid">
+  <!-- Cards injected by JS -->
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const tools = [
+  {
+    id: 1,
+    name: "AI Chat Tools",
+    subname: "e.g. POE / ChatGPT / Grok",
+    sen: ["SLI","SpLD"],
+    grade: ["小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "支援多種語言",
+    costLabel: "免費（基本版）",
+    desc: "透過AI快速創建個別化學習材料，促進學生言語能力的提升。應用包括：構音訓練（生成包含目標語音的字詞或句子）、詞義訓練（提供詞彙定義與例句）、句式練習（設計不同句式練習素材）、話語能力訓練（生成連續性話題或故事場景）、討論訓練（按主題生成討論要點）。運用 AI 幫助導師引導學生整理思路並完成表達內容，提升語言組織與表達能力。",
+    youtube: null,
+    website: "https://poe.com",
+    websiteLabel: "POE",
+    websiteExtra: "https://chatgpt.com",
+    websiteExtraLabel: "ChatGPT",
+    remarks: "Poe: https://poe.com | ChatGPT: https://chatgpt.org | Grok: https://grok.com"
+  },
+  {
+    id: 2,
+    name: "Autism Tracker Pro",
+    subname: "",
+    sen: ["ASD"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "iOS 付費",
+    desc: "是一款行為追蹤應用程式，幫助教師／家長監控自閉症兒童的行為與進展。",
+    youtube: "jfEP_agb6yc",
+    youtubeLabel: "示範片段：Autism Tracker Pro",
+    website: null,
+    remarks: "iOS 付費"
+  },
+  {
+    id: 3,
+    name: "Avaz AAC",
+    subname: "",
+    sen: ["ASD"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "英文",
+    costLabel: "iOS/Android 付費",
+    desc: "結合圖像、文字及 AI 預測等科技，協助 SEN 學童建立語言能力及日常交流。透過圖片選擇幫助非口語溝通學生表達需要和想法，支援多達 70+ 語言。",
+    youtube: "HUK0ekwR0MQ",
+    youtubeLabel: "示範片段：Avaz AAC App Walkthrough",
+    website: "https://avazapp.com",
+    websiteLabel: "官方網站",
+    remarks: "iOS/Android 付費，提供 14 天免費試用"
+  },
+  {
+    id: 4,
+    name: "Birdhouse for Autism",
+    subname: "",
+    sen: ["ASD"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "iOS/Android（部分功能需付費）",
+    desc: "用於追蹤 ASD 兒童的行為、日常例程和進展。應用程式利用數據分析技術，提供個性化的培訓計劃建議，幫助制定針對性行為支持策略。",
+    youtube: "TE7C6kgBa1I",
+    youtubeLabel: "示範片段：Birdhouse for Autism",
+    website: null,
+    remarks: "iOS/Android App，部分功能需付費"
+  },
+  {
+    id: 5,
+    name: "Cantone (CANTON)",
+    subname: "廣東話學習 AI 應用",
+    sen: [],
+    grade: ["中學"],
+    tier: ["Tier2"],
+    lang: "中文（廣東話）",
+    costLabel: "機構資助免費",
+    desc: "機構「Cantone」獲社區資源資助，為學校及非華語學生（包括有特殊教育需要的非華語學生）提供免費的 AI 應用程式使用及到校支援服務。透過應用程式幫助學生學習廣東話及進行求職模擬訓練。工作坊以學生興趣作切入點，設計角色扮演教學內容，學習生活中不同範疇的中文詞彙、發音，自行測試發音準確度。",
+    youtube: null,
+    website: null,
+    remarks: "機構到校支援，免費提供 AI 應用程式使用"
+  },
+  {
+    id: 6,
+    name: "Choiceworks",
+    subname: "",
+    sen: ["ASD"],
+    grade: ["幼兒","小學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "iOS 付費",
+    desc: "建立視覺化日程表和行為支持系統，通過個人化提示協助管理日常例程和過渡。應用程式使用 AI 技術優化日程安排，適應個別需求，幫助自閉症兒童理解和預測每天的活動流程。",
+    youtube: "gxKxmfmUcmU",
+    youtubeLabel: "示範片段：Choiceworks App",
+    website: "https://www.beevisual.com",
+    websiteLabel: "官方網站",
+    remarks: "iOS 付費"
+  },
+  {
+    id: 7,
+    name: "Cognoa",
+    subname: "",
+    sen: ["ASD"],
+    grade: ["幼兒","小學"],
+    tier: ["Tier2","Tier3"],
+    lang: "英文",
+    costLabel: "醫療領域產品",
+    desc: "利用 AI 對行為數據進行模式識別，為 ASD 早期篩查與干預提供建議。透過分析兒童行為影片，協助識別自閉症早期跡象，幫助專業人員作出更快、更準確的評估。",
+    youtube: null,
+    website: "https://cognoa.com",
+    websiteLabel: "官方網站",
+    remarks: "醫療領域產品"
+  },
+  {
+    id: 8,
+    name: "DeepSeek LLM + OllaMa",
+    subname: "本地 AI 問答及內容生成系統",
+    sen: ["MI"],
+    grade: ["小學","中學"],
+    tier: [],
+    lang: "中文",
+    costLabel: "開源免費（本地部署）",
+    desc: "以本地伺服器運行 OllaMa 平台，配合 DeepSeek LLM 與 OpenUI 前端介面，提供安全、離線的 AI 問答與生成服務支援教學。無需連線互聯網，保障學生私隱，適合學校內部使用。",
+    youtube: "s1yVSAjYD4M",
+    youtubeLabel: "示範片段：DeepSeek + Ollama 本地部署",
+    website: "https://ollama.com",
+    websiteLabel: "官方網站",
+    remarks: "開源模型，已本地部署，無需連線互聯網，保障私隱"
+  },
+  {
+    id: 9,
+    name: "Doro: AI for Mental Wellness",
+    subname: "Google Play / App Store",
+    sen: ["MI"],
+    grade: ["中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "英文（接受中文輸入）",
+    costLabel: "每月 30 分鐘免費",
+    desc: "AI 聊天機器人能提供文字及語音回應，使用超過 20 種實證為本心理治療方法，協助理解和管理日常挑戰，提供個人化策略建議。滑鐵盧大學指定使用，加拿大 30 間診所採用。",
+    youtube: null,
+    website: "https://doro.razroze.ca",
+    websiteLabel: "官方網站",
+    remarks: "每月 30 分鐘免費文字聊天或音訊對話"
+  },
+  {
+    id: 10,
+    name: "Floreo",
+    subname: "VR 虛擬實境行為治療工具",
+    sen: ["ASD"],
+    grade: ["小學","中學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "VR 硬件 + 軟件組合",
+    desc: "利用 VR 為基礎的行為治療及教學工具，用於社交、溝通及生活技能，並結合 AI 技術逐步引入智能對話角色。提供超過 180 個生活技能場景，以科學實證支持的沉浸式學習環境。",
+    youtube: "ll1Dl2Elpfc",
+    youtubeLabel: "示範片段：Floreo VR Demo",
+    website: "https://floreovr.com",
+    websiteLabel: "官方網站",
+    remarks: "VR 硬件 + 軟件組合"
+  },
+  {
+    id: 11,
+    name: "InnerVoice",
+    subname: "",
+    sen: ["ASD","SLI"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "iOS 付費",
+    desc: "AI 將照片轉成能說話的動畫角色，幫助理解詞彙和語境。透過個人化的動畫人物（例如家人的照片）說出詞彙或句子，使 AAC 溝通更具親切感和吸引力。",
+    youtube: "44wlDAxwu14",
+    youtubeLabel: "示範片段：Inner Voice App",
+    website: "https://www.innervoiceapp.com",
+    websiteLabel: "官方網站",
+    remarks: "iOS 付費"
+  },
+  {
+    id: 12,
+    name: "Ludy App",
+    subname: "樂旼共融教育",
+    sen: ["ADHD","SpLD"],
+    grade: ["中學"],
+    tier: ["Tier2"],
+    lang: "英文",
+    costLabel: "付費訂閱",
+    desc: "學校運用樂旼共融教育有限公司的英語能力提升軟件的 AI 技術，有效提升 SEN 學生的英文口語能力。透過個人化的口語練習和即時反饋，幫助有 ADHD 及 SpLD 的學生提升英語溝通能力。",
+    youtube: null,
+    website: null,
+    remarks: "中學英語口語支援"
+  },
+  {
+    id: 13,
+    name: "MindForest: AI 心理師",
+    subname: "MindForest: AI 靈感日記 × 心理學對話",
+    sen: ["MI"],
+    grade: ["中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "英文及華語（包括廣東話）",
+    costLabel: "14 天免費試用後需付費",
+    desc: "AI 與用家對話後可根據心理學理論作出分析，並就用家的情況提供實用建議，亦會將情況和建議整合成靈感日記，方便用家回顧要點。支援廣東話，讓香港學生更易使用。",
+    youtube: null,
+    website: "https://mindforest.ai",
+    websiteLabel: "官方網站",
+    remarks: "14 天免費試用後需付費訂閱"
+  },
+  {
+    id: 14,
+    name: "Mymory",
+    subname: "療癒心靈的日記",
+    sen: ["MI"],
+    grade: ["小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "多種語言（包括廣東話）",
+    costLabel: "免費版需觀看廣告",
+    desc: "AI 可幫助用家將簡短或零碎的想法和感受整理成日記，以及根據內容自行判斷用家當天的心情，並提供低干預度而溫暖的回應。用家亦可選擇進行感恩日記，或透過「我的發現」功能進行反思，提升心理健康。",
+    youtube: null,
+    website: null,
+    remarks: "免費版需透過觀看廣告以換取寫日記所需的代幣"
+  },
+  {
+    id: 15,
+    name: "Penso",
+    subname: "AI 寫作平台",
+    sen: ["SpLD"],
+    grade: ["中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "中文",
+    costLabel: "學校使用",
+    desc: "學校透過「Penso」AI 平台提升有特殊學習困難的學生的寫作能力。平台有 3 大特色：(1) 輸入寫作題目後，系統會編制寫作大綱幫助學生整理思路；(2) 完成作文及上載至系統後，系統能自動評改並讓學生知道怎樣出錯及怎樣改正，系統還能因應學生寫作的內容編寫一份類近的範文；(3) 教師可透過系統分析了解整班的常見錯誤，以調節教學內容。",
+    youtube: null,
+    website: "https://penso.dsehero.com",
+    websiteLabel: "官方網站",
+    remarks: "中學中文寫作 AI 支援平台"
+  },
+  {
+    id: 16,
+    name: "Proloquo2Go",
+    subname: "AAC 輔助溝通應用程式",
+    sen: ["ASD","SLI"],
+    grade: ["幼兒","小學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "英文",
+    costLabel: "iOS 付費",
+    desc: "是一款輔助溝通應用程式，幫助自閉症及語言障礙人士表達思想。透過圖片符號和文字轉語音功能，支援有溝通困難的學生在日常生活中獨立表達需要和想法。",
+    youtube: "SD787kRJSyA",
+    youtubeLabel: "示範片段：Proloquo2Go 入門指南",
+    website: "https://www.assistiveware.com/products/proloquo2go",
+    websiteLabel: "官方網站",
+    remarks: "iOS 付費，AssistiveWare 提供免費培訓影片"
+  },
+  {
+    id: 17,
+    name: "QTrobot for Autism",
+    subname: "LuxAI 社交機器人",
+    sen: ["ASD"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier2"],
+    lang: "英文",
+    costLabel: "硬件 + 軟件組合",
+    desc: "機器人透過 AI 分析面部表情與反應，調整互動內容以訓練情緒辨識與社交技巧。提供超過 200 個活動，涵蓋情緒辨識、社交故事、認知發展等，讓學生以輕鬆方式學習社交互動。",
+    youtube: "FKpufMx1Kls",
+    youtubeLabel: "示範片段：QTrobot for Autism",
+    website: "https://luxai.com",
+    websiteLabel: "官方網站",
+    remarks: "硬件 + 軟件組合，適合幼兒至初中"
+  },
+  {
+    id: 18,
+    name: "Speech-to-Text / Text-to-Speech",
+    subname: "e.g. Listnr",
+    sen: ["SLI"],
+    grade: ["小學","中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "支援多種語言",
+    costLabel: "部分免費",
+    desc: "AI 提供高準確度的語音轉文字功能，能有效輔助言語治療師提升學生的語言表達能力與信心。應用：提升口語表達能力（讓學生說出句子或短文，轉成文字後檢查語法和用詞）、構音練習中的即時反饋與糾錯（通過即時語音轉文字，讓學生將結果與原文對比，發現錯誤並改正）。",
+    youtube: null,
+    website: "https://listnr.ai/text-to-speech/cantonese",
+    websiteLabel: "Listnr 網站",
+    remarks: "網址：https://listnr.ai/text-to-speech/cantonese"
+  },
+  {
+    id: 19,
+    name: "Text Generating AI Tools",
+    subname: "e.g. Rytr",
+    sen: ["SLI"],
+    grade: ["小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "英文或中文",
+    costLabel: "部分免費",
+    desc: "利用 AI 提供多樣的寫作樣式，幫助言語治療師設計個別化的語言學習素材。應用例子：記敘文（利用 AI 生成啟發性的故事情節）、說明文（生成簡單明確的解釋性段落，如「如何刷牙」）、議論文（創建有說服力的段落，讓學生練習表達觀點）。",
+    youtube: "BclM_FehhvA",
+    youtubeLabel: "示範片段：Rytr AI Writing Tool",
+    website: "https://app.rytr.me",
+    websiteLabel: "Rytr 網站",
+    remarks: "網址：https://app.rytr.me"
+  },
+  {
+    id: 20,
+    name: "Visual Aid — AI Image Generation",
+    subname: "e.g. Playground AI / Recraft",
+    sen: ["SLI"],
+    grade: ["幼兒","小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "英文",
+    costLabel: "免費（基本版）",
+    desc: "利用 AI 來生成各種視覺和互動素材，用於訓練學生的言語及溝通能力，幫助支援有言語障礙的學生。應用例子：社交技巧與語用訓練（生成社交場景圖像與情緒表達卡）、視覺輔助（設計詞彙圖卡、構音練習圖卡、活動流程圖）、故事與敘事技巧（創建切合學生生活情境的連續圖像）。",
+    youtube: null,
+    website: "https://playground.com",
+    websiteLabel: "Playground",
+    websiteExtra: "https://www.recraft.ai",
+    websiteExtraLabel: "Recraft",
+    remarks: "Playground: https://playground.com | Recraft: https://www.recraft.ai"
+  },
+  {
+    id: 21,
+    name: "Visual Organizer — AI Mind Map",
+    subname: "e.g. Whimsical",
+    sen: ["SLI"],
+    grade: ["小學","中學"],
+    tier: ["Tier1","Tier2","Tier3"],
+    lang: "英文或中文",
+    costLabel: "免費（基本版）",
+    desc: "透過 AI 提供直觀的無限畫布，讓言語治療師與學生輕鬆創建互動式心智圖，促進語言能力的提升。應用：詞彙拓展與分類（使用 Boards 工具創建心智圖，幫助學生學習分類詞彙）、故事結構練習（利用心智圖幫助學生整理故事結構）。",
+    youtube: "6oDsaKi0kN8",
+    youtubeLabel: "示範片段：Whimsical Mind Map",
+    website: "https://whimsical.com",
+    websiteLabel: "Whimsical 網站",
+    remarks: "網址：https://whimsical.com"
+  },
+  {
+    id: 22,
+    name: "Wysa: Mental Wellbeing AI",
+    subname: "",
+    sen: ["MI"],
+    grade: ["中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "英文（接受中文輸入）",
+    costLabel: "免費",
+    desc: "基於多種實證為本的技巧或心理治療方法，透過 AI 聊天機器人支援情緒低落、壓力、焦慮、睡眠問題等心理健康需要。在英國與 NHS 合作，可免費使用。",
+    youtube: null,
+    website: null,
+    remarks: "可免費使用。在英國與 NHS 合作。"
+  },
+  {
+    id: 23,
+    name: "VOISS",
+    subname: "VR 社交技能學習平台",
+    sen: ["ASD"],
+    grade: ["小學","中學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "VR 硬件 + 軟件組合",
+    desc: "透過 VR 技術，建立多社交技能學習場景、社交技能範疇及不同技能。學生可於擬真的校園環境（課室、走廊、餐廳、校車等）進行互動學習，實時獲得數據化進度監控。AI 元件能因應學生在不同場合的表現，提供即時反饋和個人化提示，促進技能跨場景遷移與自信心建立。",
+    youtube: null,
+    website: null,
+    remarks: "VR 硬件 + 軟件組合"
+  },
+  {
+    id: 24,
+    name: "巫筆",
+    subname: "AI 中文寫作輔助",
+    sen: ["SpLD"],
+    grade: ["中學"],
+    tier: ["Tier2","Tier3"],
+    lang: "中文",
+    costLabel: "學校使用",
+    desc: "中文科利用「巫筆」幫助加強有讀寫障礙學生的寫作能力。程式針對每一位學生的寫作，提供意見及針對性的建議，協助學生改善中文寫作表達。",
+    youtube: null,
+    website: null,
+    remarks: "中學中文寫作支援"
+  },
+  {
+    id: 25,
+    name: "Otsimo Speech",
+    subname: "",
+    sen: ["SLI","SpLD"],
+    grade: ["幼兒","小學"],
+    tier: ["Tier3"],
+    lang: "英文",
+    costLabel: "付費",
+    desc: "使用應用程式前需先進行簡單評估，以了解使用者的能力，AI 再按其能力生成合適的訓練目標，進行每日訓練。程式內有每日進度報告，亦可按進展調整訓練目標。",
+    youtube: null,
+    website: null,
+    remarks: ""
+  },
+  {
+    id: 26,
+    name: "Galaxy Kids Chinese",
+    subname: "AI 普通話學習平台",
+    sen: ["SLI"],
+    grade: ["幼兒","小學"],
+    tier: ["Tier3"],
+    lang: "中文",
+    costLabel: "付費",
+    desc: "以 HSK（漢語水平考試）為基礎設計課程，透過 AI 提供即時的語法和發音糾正，協助學生提升中文口語能力及準確度。",
+    youtube: null,
+    website: null,
+    remarks: ""
+  }
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let filters = { sen: 'all', grade: 'all', tier: 'all' };
+let searchTerm = '';
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function buildCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+
+  tools.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = t.id;
+    card.dataset.sen = t.sen.join(',');
+    card.dataset.grade = t.grade.join(',');
+    card.dataset.tier = t.tier.join(',');
+
+    // Tags
+    const senTags  = t.sen.map(s => `<span class="tag tag-sen">${s}</span>`).join('');
+    const gradeTags = [...new Set(t.grade.map(g => {
+      if (g === '幼兒') return '幼兒';
+      if (g === '小學') return '小學';
+      if (g === '中學') return '中/高中';
+      return g;
+    }))].map(g => `<span class="tag tag-grade">${g}</span>`).join('');
+    const tierTags = t.tier.map(tr => `<span class="tag tag-tier">${tr}</span>`).join('');
+    const costTag  = `<span class="tag tag-cost">${t.costLabel}</span>`;
+    const langTag  = `<span class="tag tag-lang">${t.lang}</span>`;
+
+    // Footer links
+    let footerLinks = '';
+    if (t.website) {
+      footerLinks += `<a class="footer-link" href="${t.website}" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        ${t.websiteLabel || '官方網站'}
+      </a>`;
+    }
+    if (t.websiteExtra) {
+      footerLinks += `<a class="footer-link" href="${t.websiteExtra}" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        ${t.websiteExtraLabel || '網站'}
+      </a>`;
+    }
+    if (t.youtube) {
+      footerLinks += `<a class="footer-link" href="https://www.youtube.com/watch?v=${t.youtube}" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        YouTube 示範
+      </a>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-number">${t.id}</div>
+        <div class="card-title">${t.name}${t.subname ? `<br><span style="font-size:0.8em;font-weight:500;color:#718096">${t.subname}</span>` : ''}</div>
+        <div class="tags">${senTags}${gradeTags}${tierTags}${langTag}${costTag}</div>
+      </div>
+      <div class="card-body">
+        <p class="desc" id="desc-${t.id}">${t.desc}</p>
+        <button class="expand-btn" onclick="toggleDesc(${t.id}, this)">▼ 顯示更多</button>
+      </div>
+      ${footerLinks ? `<div class="card-footer">${footerLinks}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleDesc(id, btn) {
+  const desc = document.getElementById('desc-' + id);
+  if (desc.classList.contains('expanded')) {
+    desc.classList.remove('expanded');
+    btn.textContent = '▼ 顯示更多';
+  } else {
+    desc.classList.add('expanded');
+    btn.textContent = '▲ 收起';
+  }
+}
+
+// ─────────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────────
+function setFilter(type, value, btn) {
+  filters[type] = value;
+
+  const group = btn.parentElement.querySelectorAll('.filter-btn');
+  group.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  applyFilters();
+}
+
+function applyFilters() {
+  searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  let visible = 0;
+
+  document.querySelectorAll('.card').forEach(card => {
+    const id = parseInt(card.dataset.id);
+    const t = tools.find(x => x.id === id);
+
+    let show = true;
+
+    if (filters.sen !== 'all') {
+      show = show && t.sen.includes(filters.sen);
+    }
+    if (filters.grade !== 'all') {
+      show = show && t.grade.includes(filters.grade);
+    }
+    if (filters.tier !== 'all') {
+      show = show && t.tier.includes(filters.tier);
+    }
+    if (searchTerm) {
+      const searchable = (t.name + ' ' + (t.subname||'') + ' ' + t.desc + ' ' + t.sen.join(' ')).toLowerCase();
+      show = show && searchable.includes(searchTerm);
+    }
+
+    card.classList.toggle('hidden', !show);
+    if (show) visible++;
+  });
+
+  document.getElementById('count').textContent = visible;
+
+  let noRes = document.getElementById('noResults');
+  if (visible === 0) {
+    if (!noRes) {
+      noRes = document.createElement('div');
+      noRes.id = 'noResults';
+      noRes.className = 'no-results';
+      noRes.innerHTML = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" display="block" style="margin:0 auto 12px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>沒有符合條件的工具<br><small>請嘗試調整篩選條件</small></p>`;
+      document.getElementById('cardGrid').appendChild(noRes);
+    }
+    noRes.style.display = 'block';
+  } else if (noRes) {
+    noRes.style.display = 'none';
+  }
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+buildCards();
+applyFilters();
+</script>
+</body>
+</html>
